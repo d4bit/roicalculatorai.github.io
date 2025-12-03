@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
@@ -30,6 +31,13 @@
       .blur-content {
         filter: blur(8px);
         pointer-events: none; /* Evita interacciones mientras está borroso */
+        opacity: 0.5;
+        transition: all 0.5s ease;
+      }
+      .content-visible {
+        filter: blur(0);
+        opacity: 1;
+        pointer-events: auto;
       }
       .overlay-email {
         position: absolute;
@@ -37,13 +45,21 @@
         left: 0;
         right: 0;
         bottom: 0;
-        z-index: 10; /* Asegura que esté por encima del contenido borroso */
+        z-index: 20; /* Asegura que esté por encima del contenido borroso */
         display: flex;
         align-items: center;
         justify-content: center;
         /* Estilo sutil de fondo para el overlay */
-        background-color: rgba(241, 245, 249, 0.7); 
-        backdrop-filter: blur(2px);
+        background-color: rgba(241, 245, 249, 0.8); 
+        backdrop-filter: blur(4px);
+        border-radius: 1rem;
+      }
+      .animate-spin {
+        animation: spin 1s linear infinite;
+      }
+      @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
       }
     </style>
   </head>
@@ -89,6 +105,7 @@
     </div>
 
     <div class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <!-- Columna Izquierda: Inputs -->
       <div class="lg:col-span-4 space-y-6">
         <div class="glass-panel p-6">
           <h2 class="text-lg font-semibold mb-6 flex items-center gap-2">
@@ -166,7 +183,7 @@
           <div class="pt-4 border-t border-slate-100">
             <label class="text-sm font-bold text-slate-800 mb-2 block"
               >Inversión Servicios (Consultoría)
-            >
+            </label>
             <div class="relative">
               <span class="absolute left-3 top-2 text-slate-400">€</span>
               <input
@@ -198,7 +215,10 @@
         </div>
       </div>
 
+      <!-- Columna Derecha: Resultados -->
       <div class="lg:col-span-8 space-y-6 relative" id="resultsColumn">
+        
+        <!-- Overlay para Email -->
         <div class="overlay-email" id="emailOverlay">
           <div
             class="bg-white p-8 rounded-xl shadow-2xl max-w-sm w-full text-center"
@@ -214,20 +234,22 @@
               type="email"
               id="clientEmail"
               placeholder="tu.correo@empresa.com"
-              class="w-full px-4 py-3 mb-4 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+              class="w-full px-4 py-3 mb-4 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-colors"
             />
             <p id="emailError" class="text-red-500 text-xs mb-3 hidden">
                 Por favor, introduce un email válido.
             </p>
             <button
+              id="btnUnlock"
               onclick="unlockResults()"
-              class="w-full bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-lg font-bold text-sm transition text-white shadow-lg shadow-blue-500/50"
+              class="w-full bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-lg font-bold text-sm transition text-white shadow-lg shadow-blue-500/50 flex items-center justify-center gap-2"
             >
               Mostrar Resultados
             </button>
           </div>
         </div>
 
+        <!-- Contenido de Resultados (con blur inicial) -->
         <div id="resultsContent" class="blur-content">
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div class="glass-panel p-6 border-l-4 border-emerald-500">
@@ -274,19 +296,59 @@
             <canvas id="roiChart"></canvas>
           </div>
 
-          <div
-            class="bg-slate-900 text-white p-4 rounded-xl flex justify-between items-center"
-          >
+          <!-- Footer con Feedback -->
+          <div class="bg-slate-900 text-white p-4 rounded-xl flex flex-col md:flex-row justify-between items-center gap-4">
             <div class="text-sm">
               <span class="font-bold text-blue-400">Nota:</span> Cálculos
               basados en eficiencia operativa estándar.
             </div>
-            <button
-              onclick="alert('Generando PDF para ' + document.getElementById('clientEmail').value + '... (Simulación)')"
-              class="bg-blue-600 hover:bg-blue-500 px-6 py-2 rounded-lg font-bold text-sm transition text-white"
-            >
-              Contacta con nosotros
-            </button>
+            
+            <!-- Contenedor de Feedback -->
+            <div id="feedbackContainer" class="flex items-center gap-4 bg-slate-800/50 px-4 py-2 rounded-lg">
+                
+                <!-- Estado Inicial: Botones -->
+                <div id="feedbackButtons" class="flex items-center gap-4">
+                    <span class="text-sm font-bold text-slate-200">¡Danos tu opinión!</span>
+                    <div class="flex gap-2">
+                        <button 
+                            onclick="sendFeedback('like')"
+                            class="p-2 hover:bg-slate-700 rounded-full transition-colors group"
+                            title="Me gusta"
+                        >
+                            <svg class="w-6 h-6 text-slate-400 group-hover:text-green-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />
+                            </svg>
+                        </button>
+                        <button 
+                            onclick="sendFeedback('dislike')"
+                            class="p-2 hover:bg-slate-700 rounded-full transition-colors group"
+                            title="No me gusta"
+                        >
+                            <svg class="w-6 h-6 text-slate-400 group-hover:text-red-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M10 14H5.236a2 2 0 01-1.789-2.894l3.5-7A2 2 0 018.736 3h4.018a2 2 0 01.485.06l3.76.94m-7 10v5a2 2 0 002 2h.095c.5 0 .905-.405.905-.905 0-.714.211-1.412.608-2.006L17 13V4m-7 10h2m5-10h2a2 2 0 012 2v6a2 2 0 01-2 2h-2.5" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Estado Cargando -->
+                <div id="feedbackSending" class="hidden flex items-center gap-2 text-sm text-slate-300">
+                    <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Enviando...
+                </div>
+
+                <!-- Estado Enviado -->
+                <div id="feedbackSent" class="hidden flex items-center gap-2 text-sm font-bold text-green-400 animate-pulse">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    ¡Gracias por tu opinión!
+                </div>
+            </div>
+
           </div>
         </div>
       </div>
@@ -301,8 +363,9 @@
         jouleEff: 0.925, // (95% + 90%) / 2
       };
 
-      // Flag para controlar si se ha desbloqueado la vista
+      // Variables Globales
       let isUnlocked = false;
+      let userEmail = "";
 
       // --- ELEMENTOS DOM ---
       const inputs = {
@@ -325,7 +388,7 @@
       const emailOverlay = document.getElementById("emailOverlay");
       const clientEmailInput = document.getElementById("clientEmail");
       const emailError = document.getElementById("emailError");
-
+      const btnUnlock = document.getElementById("btnUnlock");
 
       // --- GRÁFICO CHART.JS ---
       const ctx = document.getElementById("roiChart").getContext("2d");
@@ -373,14 +436,14 @@
         const numUsers = parseInt(inputs.users.value);
         const avgSalary = parseInt(inputs.salary.value);
         const intensity = parseInt(inputs.intensity.value);
-        const cost = parseInt(inputs.cost.value);
+        const cost = parseInt(inputs.cost.value) || 0; // Evitar NaN
 
         // 2. Actualizar textos de los sliders
         displays.users.textContent = numUsers;
         displays.salary.textContent = avgSalary.toLocaleString() + " €";
         displays.intensity.textContent = intensity + "%";
         
-        // Si no se ha desbloqueado, no se realizan los cálculos ni se actualizan los resultados financieros
+        // Si no se ha desbloqueado, no mostramos resultados financieros
         if (!isUnlocked) {
             return;
         }
@@ -399,20 +462,20 @@
         const annualSavings = hoursSavedPerYear * hourlyRate;
         const monthlySavings = annualSavings / 12;
 
-        const roi = ((annualSavings - cost) / cost) * 100;
-        const payback = cost / monthlySavings;
+        const roi = cost === 0 ? 0 : ((annualSavings - cost) / cost) * 100;
+        const payback = monthlySavings <= 0 ? 0 : cost / monthlySavings;
 
         // 4. Actualizar Resultados
         displays.savings.textContent =
           Math.round(annualSavings).toLocaleString() + " €";
         displays.roi.textContent = Math.round(roi) + " %";
         displays.payback.textContent =
-          payback < 1 ? "< 1 Mes" : payback.toFixed(1) + " Meses";
+          payback <= 0 ? "0 Meses" : (payback < 1 ? "< 1 Mes" : payback.toFixed(1) + " Meses");
 
         // 5. Actualizar Gráfico
         const chartData = [];
         let balance = -cost; // Empieza en negativo (inversión)
-        // Solo calcular hasta 12 meses, empezando en Mes 0 (balance inicial)
+        // Solo calcular hasta 12 meses
         chartData.push(-cost); 
         for (let i = 2; i <= 12; i += 2) {
             balance += monthlySavings * 2;
@@ -423,14 +486,14 @@
         myChart.update();
       }
       
-      // --- FUNCIÓN DE DESBLOQUEO ---
+      // --- VALIDACIÓN DE EMAIL ---
       function isValidEmail(email) {
-          // Expresión regular simple para validar un formato de email básico
           const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
           return re.test(String(email).toLowerCase());
       }
 
-      function unlockResults() {
+      // --- FUNCIÓN DE DESBLOQUEO (ENVÍO EMAIL) ---
+      async function unlockResults() {
         const email = clientEmailInput.value;
         
         if (!isValidEmail(email)) {
@@ -441,21 +504,91 @@
         
         emailError.classList.add('hidden');
         clientEmailInput.classList.remove('border-red-500');
+
+        // Estado Cargando
+        const originalText = btnUnlock.innerText;
+        btnUnlock.disabled = true;
+        btnUnlock.innerHTML = `
+            <svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            Procesando...
+        `;
         
-        // 1. Cambiar el flag de estado
+        // ENVÍO DE EMAIL (AJAX)
+        try {
+            await fetch("https://formsubmit.co/ajax/roicalculatorai@gmail.com", {
+                method: "POST",
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    email: email,
+                    _subject: "Nuevo Lead - SAP Value Bridge",
+                    _captcha: "false",
+                    timestamp: new Date().toLocaleString(),
+                    message: `Nuevo usuario desbloqueó la calculadora ROI con el email: ${email}`
+                })
+            });
+            console.log("Email enviado correctamente");
+        } catch (error) {
+            console.error("Error enviando email:", error);
+            // Seguimos adelante aunque falle el email para no bloquear al usuario
+        }
+
+        // --- DESBLOQUEO UI ---
+        userEmail = email; // Guardamos el email para usarlo en el feedback
         isUnlocked = true;
         
-        // 2. Ocultar el overlay
+        // Ocultar Overlay
         emailOverlay.style.display = 'none';
         
-        // 3. Quitar el blur
+        // Mostrar contenido
         resultsContent.classList.remove('blur-content');
+        resultsContent.classList.add('content-visible');
         
-        // 4. Ejecutar el cálculo inicial con los valores actuales
+        // Calcular
         calculate(); 
-        
-        // Opcional: enfocar el primer slider para indicar que la interacción continúa
         inputs.users.focus();
+      }
+
+      // --- FUNCIÓN DE FEEDBACK ---
+      async function sendFeedback(type) {
+          // 1. Cambiar estado UI a "Enviando"
+          document.getElementById('feedbackButtons').classList.add('hidden');
+          document.getElementById('feedbackSending').classList.remove('hidden');
+
+          // 2. Recoger datos actuales
+          const currentRoi = displays.roi.textContent;
+          const currentSavings = displays.savings.textContent;
+
+          // 3. Enviar a formsubmit
+          try {
+              await fetch("https://formsubmit.co/ajax/roicalculatorai@gmail.com", {
+                  method: "POST",
+                  headers: { 
+                      'Content-Type': 'application/json',
+                      'Accept': 'application/json'
+                  },
+                  body: JSON.stringify({
+                      email: userEmail,
+                      _subject: `Nuevo Feedback: ${type === 'like' ? 'LIKE 👍' : 'DISLIKE 👎'}`,
+                      _captcha: "false",
+                      feedbackType: type,
+                      roiCalculated: currentRoi,
+                      savingsCalculated: currentSavings,
+                      message: `El usuario ${userEmail} ha dado un ${type.toUpperCase()} a la calculadora.`
+                  })
+              });
+          } catch (error) {
+              console.error("Error enviando feedback:", error);
+          }
+
+          // 4. Cambiar estado UI a "Enviado"
+          document.getElementById('feedbackSending').classList.add('hidden');
+          document.getElementById('feedbackSent').classList.remove('hidden');
       }
 
       // --- EVENT LISTENERS ---
@@ -463,7 +596,7 @@
         input.addEventListener("input", calculate);
       });
 
-      // Cálculo inicial (solo para actualizar los sliders y no los resultados financieros)
+      // Cálculo inicial (solo visualización de sliders)
       calculate(); 
     </script>
   </body>
