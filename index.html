@@ -1,0 +1,471 @@
+!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SAP Value Bridge - Joule Edition</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+      /* Ajustes finos para que parezca una app nativa */
+      body {
+        background-color: #f1f5f9;
+        font-family: "Segoe UI", sans-serif;
+      }
+      .slider-thumb::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 20px;
+        height: 20px;
+        background: #2563eb;
+        border-radius: 50%;
+        cursor: pointer;
+      }
+      .glass-panel {
+        background: white;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        border-radius: 1rem;
+      }
+      /* ESTILO PARA EL BLUR Y EL OVERLAY */
+      .blur-content {
+        filter: blur(8px);
+        pointer-events: none; /* Evita interacciones mientras está borroso */
+      }
+      .overlay-email {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 10; /* Asegura que esté por encima del contenido borroso */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        /* Estilo sutil de fondo para el overlay */
+        background-color: rgba(241, 245, 249, 0.7); 
+        backdrop-filter: blur(2px);
+      }
+    </style>
+  </head>
+  <body class="text-slate-800 p-4 md:p-8">
+    <div
+      class="max-w-6xl mx-auto mb-8 flex flex-col md:flex-row justify-between items-center gap-4"
+    >
+      <div class="flex items-center gap-3">
+        <div class="bg-blue-900 p-3 rounded-lg text-white">
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <rect x="4" y="2" width="16" height="20" rx="2" />
+            <line x1="8" y1="6" x2="16" y2="6" />
+            <line x1="16" y1="14" x2="16" y2="14" />
+            <line x1="8" y1="14" x2="8" y2="14" />
+            <line x1="12" y1="14" x2="12" y2="14" />
+            <line x1="16" y1="18" x2="16" y2="18" />
+            <line x1="8" y1="18" x2="8" y2="18" />
+            <line x1="12" y1="18" x2="12" y2="18" />
+          </svg>
+        </div>
+        <div>
+          <h1 class="text-2xl font-bold text-slate-900">SAP Value Bridge</h1>
+          <p class="text-sm text-slate-500 font-medium">
+            ROI Calculator • Joule Base Edition
+          </p>
+        </div>
+      </div>
+      <div class="text-right">
+        <p class="text-xs text-slate-400 uppercase tracking-wider">
+          Validado con
+        </p>
+        <p class="text-sm font-bold text-blue-800">
+          SAP Discovery Center Metrics
+        </p>
+      </div>
+    </div>
+
+    <div class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <div class="lg:col-span-4 space-y-6">
+        <div class="glass-panel p-6">
+          <h2 class="text-lg font-semibold mb-6 flex items-center gap-2">
+            <span class="w-1 h-6 bg-blue-600 rounded-full"></span>
+            Datos del Cliente
+          </h2>
+
+          <div class="mb-6">
+            <div class="flex justify-between mb-2">
+              <label class="text-sm font-medium text-slate-600"
+                >Usuarios SAP</label
+              >
+              <span
+                id="displayUsers"
+                class="text-sm font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded"
+                >50</span
+              >
+            </div>
+            <input
+              type="range"
+              id="inputUsers"
+              min="10"
+              max="500"
+              step="10"
+              value="50"
+              class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer"
+            />
+          </div>
+
+          <div class="mb-6">
+            <div class="flex justify-between mb-2">
+              <label class="text-sm font-medium text-slate-600"
+                >Coste Empleado / Año</label
+              >
+              <span id="displaySalary" class="text-sm font-bold text-slate-700"
+                >35.000 €</span
+              >
+            </div>
+            <input
+              type="range"
+              id="inputSalary"
+              min="20000"
+              max="80000"
+              step="1000"
+              value="35000"
+              class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer"
+            />
+          </div>
+
+          <div class="mb-6">
+            <div class="flex justify-between mb-2">
+              <label class="text-sm font-medium text-slate-600"
+                >Tiempo diario en SAP</label
+              >
+              <span
+                id="displayIntensity"
+                class="text-sm font-bold text-slate-700"
+                >40%</span
+              >
+            </div>
+            <input
+              type="range"
+              id="inputIntensity"
+              min="10"
+              max="80"
+              step="5"
+              value="40"
+              class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer"
+            />
+            <p class="text-xs text-slate-400 mt-1">
+              Estimación de uso del ERP.
+            </p>
+          </div>
+
+          <div class="pt-4 border-t border-slate-100">
+            <label class="text-sm font-bold text-slate-800 mb-2 block"
+              >Inversión Servicios (Consultoría)
+            >
+            <div class="relative">
+              <span class="absolute left-3 top-2 text-slate-400">€</span>
+              <input
+                type="number"
+                id="inputCost"
+                value="5000"
+                class="w-full pl-8 pr-4 py-2 border border-slate-200 rounded-lg font-mono text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+              />
+            </div>
+            <p class="text-xs text-green-600 mt-1 font-medium">
+              ✓ Licencia Joule: Incluida (0€)
+            </p>
+          </div>
+        </div>
+
+        <div class="bg-slate-200 p-4 rounded-xl border border-slate-300">
+          <h3 class="text-xs font-bold text-slate-500 uppercase mb-3">
+            Métricas Oficiales SAP
+          </h3>
+          <div class="space-y-2 text-sm text-slate-700">
+            <div class="flex items-center gap-2">
+              <span class="text-green-600 font-bold">✓</span> 95% Faster Search
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-green-600 font-bold">✓</span> 90% Faster
+              Navigation
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="lg:col-span-8 space-y-6 relative" id="resultsColumn">
+        <div class="overlay-email" id="emailOverlay">
+          <div
+            class="bg-white p-8 rounded-xl shadow-2xl max-w-sm w-full text-center"
+          >
+            <h3 class="text-xl font-bold mb-2 text-slate-800">
+              Desbloquea tu ROI
+            </h3>
+            <p class="text-sm text-slate-600 mb-6">
+              Introduce tu email para ver el cálculo y recibir el informe completo.
+            </p>
+
+            <input
+              type="email"
+              id="clientEmail"
+              placeholder="tu.correo@empresa.com"
+              class="w-full px-4 py-3 mb-4 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+            />
+            <p id="emailError" class="text-red-500 text-xs mb-3 hidden">
+                Por favor, introduce un email válido.
+            </p>
+            <button
+              onclick="unlockResults()"
+              class="w-full bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-lg font-bold text-sm transition text-white shadow-lg shadow-blue-500/50"
+            >
+              Mostrar Resultados
+            </button>
+          </div>
+        </div>
+
+        <div id="resultsContent" class="blur-content">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="glass-panel p-6 border-l-4 border-emerald-500">
+              <span class="text-xs font-bold text-slate-500 uppercase"
+                >Ahorro Anual</span
+              >
+              <div
+                id="valSavings"
+                class="text-3xl font-bold text-emerald-600 mt-1"
+              >
+                0 €
+              </div>
+              <p class="text-xs text-slate-400 mt-1">Productividad recuperada</p>
+            </div>
+            <div class="glass-panel p-6 border-l-4 border-blue-500">
+              <span class="text-xs font-bold text-slate-500 uppercase"
+                >ROI Proyecto</span
+              >
+              <div id="valRoi" class="text-3xl font-bold text-blue-600 mt-1">
+                0 %
+              </div>
+              <p class="text-xs text-slate-400 mt-1">Retorno Inversión</p>
+            </div>
+            <div class="glass-panel p-6 border-l-4 border-purple-500">
+              <span class="text-xs font-bold text-slate-500 uppercase"
+                >Payback Time</span
+              >
+              <div
+                id="valPayback"
+                class="text-3xl font-bold text-purple-600 mt-1"
+              >
+                0 Meses
+              </div>
+              <p class="text-xs text-slate-400 mt-1">Tiempo para rentabilizar</p>
+            </div>
+          </div>
+
+          <div class="glass-panel p-6 h-80 relative">
+            <h3
+              class="text-sm font-bold text-slate-700 mb-4 absolute top-6 left-6"
+            >
+              Proyección Financiera (12 Meses)
+            </h3>
+            <canvas id="roiChart"></canvas>
+          </div>
+
+          <div
+            class="bg-slate-900 text-white p-4 rounded-xl flex justify-between items-center"
+          >
+            <div class="text-sm">
+              <span class="font-bold text-blue-400">Nota:</span> Cálculos
+              basados en eficiencia operativa estándar.
+            </div>
+            <button
+              onclick="alert('Generando PDF para ' + document.getElementById('clientEmail').value + '... (Simulación)')"
+              class="bg-blue-600 hover:bg-blue-500 px-6 py-2 rounded-lg font-bold text-sm transition text-white"
+            >
+              Contacta con nosotros
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // --- CONFIGURACIÓN ---
+      const CONSTANTS = {
+        days: 220,
+        hours: 8,
+        navPercent: 0.2, // 20% del tiempo es navegación
+        jouleEff: 0.925, // (95% + 90%) / 2
+      };
+
+      // Flag para controlar si se ha desbloqueado la vista
+      let isUnlocked = false;
+
+      // --- ELEMENTOS DOM ---
+      const inputs = {
+        users: document.getElementById("inputUsers"),
+        salary: document.getElementById("inputSalary"),
+        intensity: document.getElementById("inputIntensity"),
+        cost: document.getElementById("inputCost"),
+      };
+
+      const displays = {
+        users: document.getElementById("displayUsers"),
+        salary: document.getElementById("displaySalary"),
+        intensity: document.getElementById("displayIntensity"),
+        savings: document.getElementById("valSavings"),
+        roi: document.getElementById("valRoi"),
+        payback: document.getElementById("valPayback"),
+      };
+      
+      const resultsContent = document.getElementById("resultsContent");
+      const emailOverlay = document.getElementById("emailOverlay");
+      const clientEmailInput = document.getElementById("clientEmail");
+      const emailError = document.getElementById("emailError");
+
+
+      // --- GRÁFICO CHART.JS ---
+      const ctx = document.getElementById("roiChart").getContext("2d");
+      let myChart = new Chart(ctx, {
+        type: "line",
+        data: {
+          labels: [
+            "Inicio",
+            "Mes 2",
+            "Mes 4",
+            "Mes 6",
+            "Mes 8",
+            "Mes 10",
+            "Mes 12",
+          ],
+          datasets: [
+            {
+              label: "Balance Acumulado (€)",
+              data: [0, 0, 0, 0, 0, 0, 0],
+              borderColor: "#10B981",
+              backgroundColor: "rgba(16, 185, 129, 0.1)",
+              borderWidth: 3,
+              fill: true,
+              tension: 0.4,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: {
+              grid: { color: "#f1f5f9" },
+              ticks: { callback: (v) => v / 1000 + "k€" },
+            },
+            x: { grid: { display: false } },
+          },
+        },
+      });
+
+      // --- FUNCIÓN PRINCIPAL DE CÁLCULO ---
+      function calculate() {
+        // 1. Leer valores
+        const numUsers = parseInt(inputs.users.value);
+        const avgSalary = parseInt(inputs.salary.value);
+        const intensity = parseInt(inputs.intensity.value);
+        const cost = parseInt(inputs.cost.value);
+
+        // 2. Actualizar textos de los sliders
+        displays.users.textContent = numUsers;
+        displays.salary.textContent = avgSalary.toLocaleString() + " €";
+        displays.intensity.textContent = intensity + "%";
+        
+        // Si no se ha desbloqueado, no se realizan los cálculos ni se actualizan los resultados financieros
+        if (!isUnlocked) {
+            return;
+        }
+
+        // 3. MATEMÁTICAS (CORE)
+        const hourlyRate = avgSalary / (CONSTANTS.days * CONSTANTS.hours);
+        // Horas totales en SAP * % Navegación * % Eficiencia Joule
+        const hoursSavedPerYear =
+          numUsers *
+          CONSTANTS.days *
+          CONSTANTS.hours *
+          (intensity / 100) *
+          CONSTANTS.navPercent *
+          CONSTANTS.jouleEff;
+
+        const annualSavings = hoursSavedPerYear * hourlyRate;
+        const monthlySavings = annualSavings / 12;
+
+        const roi = ((annualSavings - cost) / cost) * 100;
+        const payback = cost / monthlySavings;
+
+        // 4. Actualizar Resultados
+        displays.savings.textContent =
+          Math.round(annualSavings).toLocaleString() + " €";
+        displays.roi.textContent = Math.round(roi) + " %";
+        displays.payback.textContent =
+          payback < 1 ? "< 1 Mes" : payback.toFixed(1) + " Meses";
+
+        // 5. Actualizar Gráfico
+        const chartData = [];
+        let balance = -cost; // Empieza en negativo (inversión)
+        // Solo calcular hasta 12 meses, empezando en Mes 0 (balance inicial)
+        chartData.push(-cost); 
+        for (let i = 2; i <= 12; i += 2) {
+            balance += monthlySavings * 2;
+            chartData.push(balance);
+        }
+
+        myChart.data.datasets[0].data = chartData;
+        myChart.update();
+      }
+      
+      // --- FUNCIÓN DE DESBLOQUEO ---
+      function isValidEmail(email) {
+          // Expresión regular simple para validar un formato de email básico
+          const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+          return re.test(String(email).toLowerCase());
+      }
+
+      function unlockResults() {
+        const email = clientEmailInput.value;
+        
+        if (!isValidEmail(email)) {
+            emailError.classList.remove('hidden');
+            clientEmailInput.classList.add('border-red-500');
+            return;
+        }
+        
+        emailError.classList.add('hidden');
+        clientEmailInput.classList.remove('border-red-500');
+        
+        // 1. Cambiar el flag de estado
+        isUnlocked = true;
+        
+        // 2. Ocultar el overlay
+        emailOverlay.style.display = 'none';
+        
+        // 3. Quitar el blur
+        resultsContent.classList.remove('blur-content');
+        
+        // 4. Ejecutar el cálculo inicial con los valores actuales
+        calculate(); 
+        
+        // Opcional: enfocar el primer slider para indicar que la interacción continúa
+        inputs.users.focus();
+      }
+
+      // --- EVENT LISTENERS ---
+      Object.values(inputs).forEach((input) => {
+        input.addEventListener("input", calculate);
+      });
+
+      // Cálculo inicial (solo para actualizar los sliders y no los resultados financieros)
+      calculate(); 
+    </script>
+  </body>
+</html>
